@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>三角函數演示</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三角函數演示</title>
     <style>
         body {
             font-family: "Microsoft JhengHei", -apple-system, sans-serif;
@@ -12,6 +13,7 @@
             background-color: #f8f9fa;
             margin: 0;
             padding: 20px;
+            box-sizing: border-box;
         }
         .container {
             display: flex;
@@ -20,17 +22,28 @@
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            /* 在小螢幕上改為上下排列 */
-            flex-wrap: wrap; 
+            /* 強制水平並排，絕對不換行 */
+            flex-wrap: nowrap; 
             justify-content: center;
+            width: 100%;
+            max-width: 1100px; /* 限制最大寬度，避免在大螢幕過度拉伸 */
+            box-sizing: border-box;
+        }
+        /* 讓左右兩個區塊能均分空間並跟著縮放 */
+        .container > div {
+            flex: 1;
+            min-width: 0; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         canvas {
             border: 1px solid #eee;
             background-color: #ffffff;
-            /* 讓 canvas 在平板上不會超出螢幕邊界 */
+            /* 讓畫布在 iPad 上等比例縮小，不會破版 */
             max-width: 100%; 
             height: auto;
-            touch-action: none; /* 防止在 canvas 上預設的縮放或滑動行為 */
+            touch-action: none; 
         }
         .controls {
             margin-top: 20px;
@@ -39,7 +52,7 @@
         }
         .values {
             display: flex;
-            flex-wrap: wrap; /* 讓數值在小螢幕自動換行 */
+            flex-wrap: wrap; 
             justify-content: center;
             gap: 20px;
             font-size: 1.2rem;
@@ -107,7 +120,6 @@
 
     const centerX = 225, centerY = 225, radius = 160;
 
-    // 取得滑鼠或觸控點的座標
     function getCoordinates(e) {
         if (e.touches && e.touches.length > 0) {
             return { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -115,12 +127,11 @@
         return { x: e.clientX, y: e.clientY };
     }
 
-    // 統一的更新角度邏輯
     function updateAngle(e) {
         const coords = getCoordinates(e);
         const rect = cCanvas.getBoundingClientRect();
         
-        // 考慮 canvas 在 CSS 縮放後的實際比例
+        // 確保畫布縮小時，點擊的座標依舊準確
         const scaleX = cCanvas.width / rect.width;
         const scaleY = cCanvas.height / rect.height;
 
@@ -133,7 +144,6 @@
     }
 
     function init() {
-        // --- 滑鼠事件 (電腦端) ---
         cCanvas.addEventListener('mousedown', (e) => {
             isDragging = true;
             updateAngle(e);
@@ -143,9 +153,8 @@
             if (isDragging) updateAngle(e);
         });
 
-        // --- 觸控事件 (iPad/手機端) ---
         cCanvas.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // 防止觸控時螢幕滾動
+            e.preventDefault(); 
             isDragging = true;
             updateAngle(e);
         }, { passive: false });
@@ -154,7 +163,6 @@
         
         window.addEventListener('touchmove', (e) => {
             if (isDragging) {
-                // 如果是在左邊的圓形區域滑動，防止整個網頁被拖著走
                 if (e.target === cCanvas) e.preventDefault(); 
                 updateAngle(e);
             }
