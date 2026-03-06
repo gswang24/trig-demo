@@ -22,14 +22,12 @@
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            /* 強制水平並排，絕對不換行 */
             flex-wrap: nowrap; 
             justify-content: center;
             width: 100%;
-            max-width: 1100px; /* 限制最大寬度，避免在大螢幕過度拉伸 */
+            max-width: 1100px;
             box-sizing: border-box;
         }
-        /* 讓左右兩個區塊能均分空間並跟著縮放 */
         .container > div {
             flex: 1;
             min-width: 0; 
@@ -40,7 +38,6 @@
         canvas {
             border: 1px solid #eee;
             background-color: #ffffff;
-            /* 讓畫布在 iPad 上等比例縮小，不會破版 */
             max-width: 100%; 
             height: auto;
             touch-action: none; 
@@ -131,7 +128,6 @@
         const coords = getCoordinates(e);
         const rect = cCanvas.getBoundingClientRect();
         
-        // 確保畫布縮小時，點擊的座標依舊準確
         const scaleX = cCanvas.width / rect.width;
         const scaleY = cCanvas.height / rect.height;
 
@@ -330,11 +326,18 @@
     }
 
     function updateDisplayValues() {
-        const s = Math.sin(mathAngle), c = Math.cos(mathAngle);
-        const t = Math.abs(c) < 0.001 ? "±∞" : (s / c).toFixed(3);
-        const deg = (mathAngle * 180 / Math.PI).toFixed(1);
+        // 1. 先取得四捨五入後的角度字串 (例如 "45.0")
+        const degStr = (mathAngle * 180 / Math.PI).toFixed(1);
+        
+        // 2. 用這個「準備要顯示的」角度去反推弧度，確保計算基準一致
+        const preciseRad = parseFloat(degStr) * Math.PI / 180;
+        
+        const s = Math.sin(preciseRad);
+        const c = Math.cos(preciseRad);
+        // 使用 Math.tan 來計算，確保 tan(45.0) 完美等於 1.000
+        const t = Math.abs(c) < 0.001 ? "±∞" : Math.tan(preciseRad).toFixed(3);
 
-        document.getElementById('valDeg').innerText = deg + "°";
+        document.getElementById('valDeg').innerText = degStr + "°";
         document.getElementById('valSin').innerText = s.toFixed(3);
         document.getElementById('valCos').innerText = c.toFixed(3);
         document.getElementById('valTan').innerText = t;
