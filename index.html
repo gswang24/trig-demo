@@ -95,7 +95,6 @@
             border-radius: 4px 4px 0 0;
             cursor: text;
         }
-        /* 隱藏數字輸入框右側的上下小箭頭 */
         #valDegInput::-webkit-outer-spin-button,
         #valDegInput::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -185,7 +184,6 @@
     }
 
     function init() {
-        // --- 拖曳相關事件 ---
         cCanvas.addEventListener('mousedown', (e) => {
             isDragging = true;
             updateAngle(e);
@@ -210,7 +208,6 @@
             }
         }, { passive: false });
 
-        // --- 輸入框相關事件 ---
         degInput.addEventListener('focus', function() { this.select(); });
         degInput.addEventListener('click', function() { this.select(); });
         
@@ -218,9 +215,8 @@
             let val = parseFloat(this.value);
             if (isNaN(val)) val = 0;
             
-            // 將超過範圍的角度換算回 0~360
             val = ((val % 360) + 360) % 360; 
-            if (val === 0 && parseFloat(this.value) === 360) val = 360; // 允許顯示 360.0
+            if (val === 0 && parseFloat(this.value) === 360) val = 360;
 
             mathAngle = val * Math.PI / 180;
             draw();
@@ -228,7 +224,7 @@
 
         degInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
-                this.blur(); // 按下 Enter 自動離開輸入框，觸發 change 重新畫圖
+                this.blur(); 
             }
         });
 
@@ -271,14 +267,19 @@
         ctxC.arc(centerX, centerY, 40, 0, -mathAngle, true);
         ctxC.stroke();
 
-        const labelR = 55;
+        // --- 更新：實時顯示角度數值 ---
+        const currentDeg = (mathAngle * 180 / Math.PI).toFixed(1);
+        const thetaText = "θ = " + currentDeg + "°";
+        const labelR = 65; // 把半徑拉大一點，避免字跟橘色弧線重疊
         const lx = centerX + Math.cos(mathAngle / 2) * labelR;
         const ly = centerY - Math.sin(mathAngle / 2) * labelR;
+        
         ctxC.fillStyle = '#FF9500';
-        ctxC.font = "italic bold 18px serif";
+        ctxC.font = "bold 15px Arial"; // 改為稍微小一點且清晰的無襯線字體
         ctxC.textAlign = "center";
         ctxC.textBaseline = "middle";
-        ctxC.fillText("θ", lx, ly);
+        ctxC.fillText(thetaText, lx, ly);
+        // ---------------------------------
 
         ctxC.lineWidth = 3;
         ctxC.strokeStyle = '#FF3B30';
@@ -401,7 +402,6 @@
         const c = Math.cos(preciseRad);
         const t = Math.abs(c) < 0.001 ? "±∞" : Math.tan(preciseRad).toFixed(3);
 
-        // 如果目前不是在手動打字狀態，才跟隨拖曳更新輸入框的數字
         if (document.activeElement !== degInput) {
             degInput.value = degStr;
         }
