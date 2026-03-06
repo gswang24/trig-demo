@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>三角函數演示</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 1px solid #eee;
+            background-color: #ffffff;
+        }
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+            width: 100%;
+        }
+        .values {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        #valDeg { color: #FF9500; }
+        #valSin { color: #007AFF; }
+        #valCos { color: #FF3B30; }
+        #valTan { color: #AF52DE; }
+
+        .buttons button {
+            padding: 10px 24px;
+            font-size: 1rem;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: #fff;
+            margin: 0 5px;
+            transition: all 0.2s;
+        }
+        button.active-sin { background: #007AFF; color: white; border-color: #007AFF; }
+        button.active-cos { background: #FF3B30; color: white; border-color: #FF3B30; }
+        button.active-tan { background: #AF52DE; color: white; border-color: #AF52DE; }
+    </style>
+</head>
+<body>
+
+    <h2 style="color: #333;">三角函數：廣義角與週期同步演示</h2>
+
+    <div class="container">
+        <div>
+            <canvas id="circleCanvas" width="450" height="450"></canvas>
+            <p style="text-align:center; font-weight:bold;">廣義角視窗 (單位圓)</p>
+        </div>
+        <div>
+            <canvas id="graphCanvas" width="550" height="450"></canvas>
+            <p style="text-align:center; font-weight:bold;">週期視窗 (0 → 2π)</p>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="values">
+            <span>θ = <span id="valDeg">0.0°</span></span>
+            <span>sin(θ) = <span id="valSin">0.000</span></span>
+            <span>cos(θ) = <span id="valCos">0.000</span></span>
+            <span>tan(θ) = <span id="valTan">0.000</span></span>
+        </div>
+        <div class="buttons">
+            <button id="btnSin" class="active-sin" onclick="setMode('sin')">觀測 sin(θ)</button>
+            <button id="btnCos" onclick="setMode('cos')">觀測 cos(θ)</button>
+            <button id="btnTan" onclick="setMode('tan')">觀測 tan(θ)</button>
+        </div>
+    </div>
+
+<script>
+    const cCanvas = document.getElementById('circleCanvas');
+    const gCanvas = document.getElementById('graphCanvas');
+    const ctxC = cCanvas.getContext('2d');
+    const ctxG = gCanvas.getContext('2d');
+
+    let mathAngle = 0.5; 
+    let mode = 'sin';
+    let isDragging = false;
+
+    const centerX = 225, centerY = 225, radius = 160;
+
+    function init() {
+        cCanvas.addEventListener('mousedown', () => isDragging = true);
+        window.addEventListener('mouseup', () => isDragging = false);
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const rect = cCanvas.getBoundingClientRect();
+            const dx = e.clientX - rect.left - centerX;
+            const dy = e.clientY - rect.top - centerY;
+            mathAngle = Math.atan2(-dy, dx);
+            if (mathAngle < 0) mathAngle += Math.PI * 2;
+            draw();
+        });
+        draw();
+    }
+
+    function setMode(m) {
+        mode = m;
+        document.querySelectorAll('.buttons button').forEach(b => b.className = '');
+        document.getElementById('btn' + m.charAt(0).toUpperCase() + m.slice(1)).className = 'active-' + m;
+        draw();
+    }
+
+    function draw() {
+        ctxC.clearRect(0, 0, 450, 450);
+        ctxG.clearRect(0, 0, 550, 450);
+        const px = centerX + Math.cos(mathAngle) * radius;
+        const py = centerY - Math.sin(mathAngle) * radius;
+        drawUnitCircle(px, py);
+        drawPeriodGraph();
+        updateDisplayValues();
+    }
+
+    function drawUnitCircle(px, py) {
+        ctxC.strokeStyle = '#eee';
+        ctxC.lineWidth = 1;
+        ctxC.beginPath();
+        ctxC.moveTo(0, centerY); ctxC.lineTo(450, centerY);
+        ctxC.moveTo(centerX, 0); ctxC.lineTo(centerX, 450);
+        ctxC.stroke();
+
+        ctxC.strokeStyle = '#333';
+        ctxC.beginPath();
+        ctxC.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctxC.stroke();
+
+        ctxC.strokeStyle = '#FF9500';
+        ctxC.lineWidth = 2;
+        ctxC.beginPath();
+        ctxC.arc(centerX, centerY, 40, 0, -mathAngle, true);
+        ctxC.stroke();
+
+        const labelR = 55;
+        const lx = centerX + Math.cos(mathAngle / 2) * labelR;
+        const ly = centerY - Math.sin(mathAngle / 2) * labelR;
+        ctxC.fillStyle = '#FF9500';
+        ctxC.font = "italic bold 18px serif";
+        ctxC.textAlign = "center";
+        ctxC.textBaseline = "middle";
+        ctxC.fillText("θ", lx, ly);
+
+        ctxC.lineWidth = 3;
+        ctxC.strokeStyle = '#FF3B30';
+        ctxC.beginPath(); ctxC.moveTo(centerX, centerY); ctxC.lineTo(px, centerY); ctxC.stroke();
+        ctxC.fillStyle = '#FF3B30';
+        ctxC.font = "14px Microsoft JhengHei";
+        ctxC.fillText("鄰邊", (centerX + px)/2, centerY + (py < centerY ? 20 : -10));
+
+        ctxC.strokeStyle = '#007AFF';
+        ctxC.beginPath(); ctxC.moveTo(px, centerY); ctxC.lineTo(px, py); ctxC.stroke();
+        ctxC.fillStyle = '#007AFF';
+        ctxC.textAlign = px > centerX ? "left" : "right";
+        ctxC.fillText("對邊", px + (px > centerX ? 8 : -8), (centerY + py)/2);
+
+        ctxC.strokeStyle = '#5856D6';
+        ctxC.beginPath(); ctxC.moveTo(centerX, centerY); ctxC.lineTo(px, py); ctxC.stroke();
+        ctxC.save();
+        ctxC.translate((centerX + px)/2, (centerY + py)/2);
+        let textRotation = -mathAngle;
+        if (mathAngle > Math.PI / 2 && mathAngle < 3 * Math.PI / 2) textRotation += Math.PI;
+        ctxC.rotate(textRotation);
+        ctxC.fillStyle = '#5856D6';
+        ctxC.textAlign = "center";
+        ctxC.fillText("斜邊", 0, (mathAngle > Math.PI / 2 && mathAngle < 3 * Math.PI / 2) ? 15 : -10);
+        ctxC.restore();
+
+        ctxC.fillStyle = '#333';
+        ctxC.beginPath(); ctxC.arc(px, py, 6, 0, Math.PI * 2); ctxC.fill();
+        
+        const pLabelDist = radius + 25;
+        const plx = centerX + Math.cos(mathAngle) * pLabelDist;
+        const ply = centerY - Math.sin(mathAngle) * pLabelDist;
+        
+        ctxC.font = "bold 16px Arial";
+        if (Math.cos(mathAngle) > 0.1) ctxC.textAlign = "left";
+        else if (Math.cos(mathAngle) < -0.1) ctxC.textAlign = "right";
+        else ctxC.textAlign = "center";
+        if (Math.sin(mathAngle) > 0.1) ctxC.textBaseline = "bottom";
+        else if (Math.sin(mathAngle) < -0.1) ctxC.textBaseline = "top";
+        else ctxC.textBaseline = "middle";
+        ctxC.fillText("P", plx, ply);
+    }
+
+    function drawPeriodGraph() {
+        const margin = 50, gW = 550, gH = 450, gCenterY = 225;
+        const graphWidth = gW - margin - 40;
+        const scale = 120;
+
+        ctxG.save();
+        ctxG.setLineDash([5, 5]);
+        ctxG.strokeStyle = '#d1d1d6';
+        ctxG.beginPath(); ctxG.moveTo(margin, gCenterY - scale); ctxG.lineTo(gW - 20, gCenterY - scale); ctxG.stroke();
+        ctxG.beginPath(); ctxG.moveTo(margin, gCenterY + scale); ctxG.lineTo(gW - 20, gCenterY + scale); ctxG.stroke();
+        ctxG.restore();
+
+        ctxG.fillStyle = '#8e8e93';
+        ctxG.font = "12px Arial";
+        ctxG.textAlign = "right";
+        ctxG.fillText("1", margin - 10, gCenterY - scale + 5);
+        ctxG.fillText("-1", margin - 10, gCenterY + scale + 5);
+
+        ctxG.strokeStyle = '#bbb';
+        ctxG.setLineDash([]);
+        ctxG.beginPath();
+        ctxG.moveTo(margin, gCenterY); ctxG.lineTo(gW - 20, gCenterY);
+        ctxG.moveTo(margin, 20); ctxG.lineTo(margin, gH - 20);
+        ctxG.stroke();
+
+        const labels = [
+            { r: 0, t: '0' }, { r: 0.25, t: 'π/2' }, { r: 0.5, t: 'π' }, 
+            { r: 0.75, t: '3π/2' }, { r: 1.0, t: '2π' }
+        ];
+        ctxG.fillStyle = '#666';
+        ctxG.font = "16px serif";
+        ctxG.textAlign = "center";
+        labels.forEach(l => {
+            const lx = margin + l.r * graphWidth;
+            ctxG.fillText(l.t, lx, gCenterY + 35);
+            ctxG.beginPath(); ctxG.moveTo(lx, gCenterY - 5); ctxG.lineTo(lx, gCenterY + 5); ctxG.stroke();
+        });
+
+        const funcs = [
+            { id: 'sin', formula: Math.sin, color: '#007AFF' },
+            { id: 'cos', formula: Math.cos, color: '#FF3B30' },
+            { id: 'tan', formula: Math.tan, color: '#AF52DE' }
+        ];
+
+        funcs.forEach(f => {
+            const isActive = (mode === f.id);
+            ctxG.strokeStyle = isActive ? f.color : '#E5E5EA';
+            ctxG.lineWidth = isActive ? 3 : 1;
+            ctxG.beginPath();
+            let first = true;
+            for (let x = 0; x <= graphWidth; x++) {
+                let t = (x / graphWidth) * Math.PI * 2;
+                let val = f.formula(t);
+                if (f.id === 'tan' && Math.abs(val) > 8) { first = true; continue; }
+                let dx = margin + x, dy = gCenterY - (val * scale);
+                if (first) { ctxG.moveTo(dx, dy); first = false; }
+                else { ctxG.lineTo(dx, dy); }
+            }
+            ctxG.stroke();
+
+            if (isActive) {
+                let currentPointX = margin + (mathAngle / (Math.PI * 2)) * graphWidth;
+                let currentPointY = gCenterY - (f.formula(mathAngle) * scale);
+                ctxG.fillStyle = f.color;
+                ctxG.beginPath();
+                ctxG.arc(currentPointX, currentPointY, 7, 0, Math.PI * 2);
+                ctxG.fill();
+            }
+        });
+    }
+
+    function updateDisplayValues() {
+        const s = Math.sin(mathAngle), c = Math.cos(mathAngle);
+        const t = Math.abs(c) < 0.001 ? "±∞" : (s / c).toFixed(3);
+        const deg = (mathAngle * 180 / Math.PI).toFixed(1);
+
+        document.getElementById('valDeg').innerText = deg + "°";
+        document.getElementById('valSin').innerText = s.toFixed(3);
+        document.getElementById('valCos').innerText = c.toFixed(3);
+        document.getElementById('valTan').innerText = t;
+    }
+
+    init();
+</script>
+</body>
+</html>
