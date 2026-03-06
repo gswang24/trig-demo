@@ -69,7 +69,6 @@
         #valCos { color: #FF3B30; }
         #valTan { color: #AF52DE; }
 
-        /* 隱藏式輸入框的樣式 */
         #valDegInput {
             color: #FF9500;
             font-size: 1.2rem;
@@ -261,25 +260,36 @@
         ctxC.arc(centerX, centerY, radius, 0, Math.PI * 2);
         ctxC.stroke();
 
+        // 畫角度的橘色弧線 (半徑 40)
         ctxC.strokeStyle = '#FF9500';
         ctxC.lineWidth = 2;
         ctxC.beginPath();
         ctxC.arc(centerX, centerY, 40, 0, -mathAngle, true);
         ctxC.stroke();
 
-        // --- 更新：實時顯示角度數值 ---
+        // --- 更新：使用向量延伸法動態定位 θ 的文字 ---
         const currentDeg = (mathAngle * 180 / Math.PI).toFixed(1);
         const thetaText = "θ = " + currentDeg + "°";
-        const labelR = 65; // 把半徑拉大一點，避免字跟橘色弧線重疊
-        const lx = centerX + Math.cos(mathAngle / 2) * labelR;
-        const ly = centerY - Math.sin(mathAngle / 2) * labelR;
+        const midAngle = mathAngle / 2; // 算出角平分線
+        const thetaDist = 50; // 定義錨點距離 (稍大於弧線半徑 40)
+        
+        const lx = centerX + Math.cos(midAngle) * thetaDist;
+        const ly = centerY - Math.sin(midAngle) * thetaDist;
         
         ctxC.fillStyle = '#FF9500';
-        ctxC.font = "bold 15px Arial"; // 改為稍微小一點且清晰的無襯線字體
-        ctxC.textAlign = "center";
-        ctxC.textBaseline = "middle";
+        ctxC.font = "bold 15px Arial";
+        
+        // 根據角平分線的方向，動態決定文字排版的對齊基準點 (與 P 點邏輯相同)
+        if (Math.cos(midAngle) > 0.1) ctxC.textAlign = "left";
+        else if (Math.cos(midAngle) < -0.1) ctxC.textAlign = "right";
+        else ctxC.textAlign = "center";
+        
+        if (Math.sin(midAngle) > 0.1) ctxC.textBaseline = "bottom";
+        else if (Math.sin(midAngle) < -0.1) ctxC.textBaseline = "top";
+        else ctxC.textBaseline = "middle";
+        
         ctxC.fillText(thetaText, lx, ly);
-        // ---------------------------------
+        // ---------------------------------------------
 
         ctxC.lineWidth = 3;
         ctxC.strokeStyle = '#FF3B30';
@@ -309,6 +319,7 @@
         ctxC.fillStyle = '#333';
         ctxC.beginPath(); ctxC.arc(px, py, 6, 0, Math.PI * 2); ctxC.fill();
         
+        // P 點的向量延伸法定位
         const pLabelDist = radius + 25;
         const plx = centerX + Math.cos(mathAngle) * pLabelDist;
         const ply = centerY - Math.sin(mathAngle) * pLabelDist;
