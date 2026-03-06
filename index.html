@@ -115,6 +115,7 @@
     let mode = 'sin';
     let isDragging = false;
 
+    // 統一圓形半徑與波浪圖的縮放比例
     const centerX = 225, centerY = 225, radius = 160;
 
     function getCoordinates(e) {
@@ -255,9 +256,10 @@
     }
 
     function drawPeriodGraph() {
+        // 將右邊的振幅 scale 設定為等於左邊的 radius
         const margin = 50, gW = 550, gH = 450, gCenterY = 225;
         const graphWidth = gW - margin - 40;
-        const scale = 120;
+        const scale = radius; // 這裡改為連動
 
         ctxG.save();
         ctxG.setLineDash([5, 5]);
@@ -326,15 +328,11 @@
     }
 
     function updateDisplayValues() {
-        // 1. 先取得四捨五入後的角度字串 (例如 "45.0")
         const degStr = (mathAngle * 180 / Math.PI).toFixed(1);
-        
-        // 2. 用這個「準備要顯示的」角度去反推弧度，確保計算基準一致
         const preciseRad = parseFloat(degStr) * Math.PI / 180;
         
         const s = Math.sin(preciseRad);
         const c = Math.cos(preciseRad);
-        // 使用 Math.tan 來計算，確保 tan(45.0) 完美等於 1.000
         const t = Math.abs(c) < 0.001 ? "±∞" : Math.tan(preciseRad).toFixed(3);
 
         document.getElementById('valDeg').innerText = degStr + "°";
