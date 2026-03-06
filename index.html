@@ -24,13 +24,11 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             flex-wrap: nowrap; 
             justify-content: center;
-            align-items: flex-start; /* 確保兩個區塊從頂部對齊 */
+            align-items: flex-start; 
             width: 100%;
             max-width: 1100px;
             box-sizing: border-box;
         }
-        
-        /* 按照畫布的原始寬度比例 (450:550) 來分配空間，確保高度縮放一致 */
         .container > div:nth-child(1) {
             flex: 45; 
             min-width: 0; 
@@ -45,7 +43,6 @@
             flex-direction: column;
             align-items: center;
         }
-
         canvas {
             border: 1px solid #eee;
             background-color: #ffffff;
@@ -62,15 +59,51 @@
             display: flex;
             flex-wrap: wrap; 
             justify-content: center;
+            align-items: center;
             gap: 20px;
             font-size: 1.2rem;
             font-weight: bold;
             margin-bottom: 20px;
         }
-        #valDeg { color: #FF9500; }
         #valSin { color: #007AFF; }
         #valCos { color: #FF3B30; }
         #valTan { color: #AF52DE; }
+
+        /* 隱藏式輸入框的樣式 */
+        #valDegInput {
+            color: #FF9500;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            background: transparent;
+            width: 60px;
+            text-align: right;
+            font-family: inherit;
+            padding: 0;
+            margin: 0;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        #valDegInput:hover {
+            background-color: #FFF0D4;
+            border-radius: 4px;
+        }
+        #valDegInput:focus {
+            background-color: #FFF0D4;
+            border-bottom: 2px dashed #FF9500;
+            border-radius: 4px 4px 0 0;
+            cursor: text;
+        }
+        /* 隱藏數字輸入框右側的上下小箭頭 */
+        #valDegInput::-webkit-outer-spin-button,
+        #valDegInput::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        #valDegInput[type=number] {
+            -moz-appearance: textfield;
+        }
 
         .buttons button {
             padding: 10px 24px;
@@ -104,7 +137,7 @@
 
     <div class="controls">
         <div class="values">
-            <span>θ = <span id="valDeg">0.0°</span></span>
+            <span>θ = <input type="number" id="valDegInput" min="0" max="360" step="0.1">°</span>
             <span>sin(θ) = <span id="valSin">0.000</span></span>
             <span>cos(θ) = <span id="valCos">0.000</span></span>
             <span>tan(θ) = <span id="valTan">0.000</span></span>
@@ -121,12 +154,12 @@
     const gCanvas = document.getElementById('graphCanvas');
     const ctxC = cCanvas.getContext('2d');
     const ctxG = gCanvas.getContext('2d');
+    const degInput = document.getElementById('valDegInput');
 
     let mathAngle = 0.5; 
     let mode = 'sin';
     let isDragging = false;
 
-    // 統一圓形半徑與波浪圖的縮放比例
     const centerX = 225, centerY = 225, radius = 160;
 
     function getCoordinates(e) {
@@ -152,6 +185,7 @@
     }
 
     function init() {
+        // --- 拖曳相關事件 ---
         cCanvas.addEventListener('mousedown', (e) => {
             isDragging = true;
             updateAngle(e);
@@ -175,6 +209,28 @@
                 updateAngle(e);
             }
         }, { passive: false });
+
+        // --- 輸入框相關事件 ---
+        degInput.addEventListener('focus', function() { this.select(); });
+        degInput.addEventListener('click', function() { this.select(); });
+        
+        degInput.addEventListener('change', function() {
+            let val = parseFloat(this.value);
+            if (isNaN(val)) val = 0;
+            
+            // 將超過範圍的角度換算回 0~360
+            val = ((val % 360) + 360) % 360; 
+            if (val === 0 && parseFloat(this.value) === 360) val = 360; // 允許顯示 360.0
+
+            mathAngle = val * Math.PI / 180;
+            draw();
+        });
+
+        degInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                this.blur(); // 按下 Enter 自動離開輸入框，觸發 change 重新畫圖
+            }
+        });
 
         draw();
     }
@@ -345,7 +401,11 @@
         const c = Math.cos(preciseRad);
         const t = Math.abs(c) < 0.001 ? "±∞" : Math.tan(preciseRad).toFixed(3);
 
-        document.getElementById('valDeg').innerText = degStr + "°";
+        // 如果目前不是在手動打字狀態，才跟隨拖曳更新輸入框的數字
+        if (document.activeElement !== degInput) {
+            degInput.value = degStr;
+        }
+        
         document.getElementById('valSin').innerText = s.toFixed(3);
         document.getElementById('valCos').innerText = c.toFixed(3);
         document.getElementById('valTan').innerText = t;
